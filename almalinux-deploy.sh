@@ -15,8 +15,8 @@ OS_RELEASE_PATH='/etc/os-release'
 REDHAT_RELEASE_PATH='/etc/redhat-release'
 STAGE_STATUSES_DIR='/var/run/almalinux-deploy-statuses'
 # AlmaLinux OS 8.3
-MINIMAL_SUPPORTED_VERSION='8.3'
-VERSION='0.1.11'
+MINIMAL_SUPPORTED_VERSION='8'
+VERSION='0.1.10'
 
 BRANDING_PKGS="centos-backgrounds centos-logos centos-indexhtml \
                 centos-logos-ipa centos-logos-httpd \
@@ -27,6 +27,7 @@ BRANDING_PKGS="centos-backgrounds centos-logos centos-indexhtml \
                 redhat-logos-ipa redhat-logos-httpd"
 
 REMOVE_PKGS="centos-linux-release centos-gpg-keys centos-linux-repos \
+                centos-stream-release centos-stream-repos kpatch kpatch-dnf \
                 libreport-plugin-rhtsupport libreport-rhel insights-client \
                 libreport-rhel-anaconda-bugzilla libreport-rhel-bugzilla \
                 oraclelinux-release oraclelinux-release-el8 \
@@ -116,16 +117,6 @@ assert_run_as_root() {
     report_step_done 'Check root privileges'
 }
 
-# Terminates the program if UEFI Secure Boot is enabled
-assert_secureboot_disabled() {
-    local -r message='Check Secure Boot disabled'
-    if LC_ALL='C' mokutil --sb-state 2>/dev/null | grep -P '^SecureBoot\s+enabled' 1>/dev/null; then
-        report_step_error "${message}" 'Secure Boot is not supported yet'
-        exit 1
-    fi
-    report_step_done "${message}"
-}
-
 # Prints a system architecture.
 get_system_arch() {
     uname -i
@@ -155,7 +146,7 @@ get_os_version() {
     local -r os_type="${1}"
     local os_version
     if [[ "${os_type}" == 'centos' ]]; then
-        if ! os_version="$(grep -oP 'CentOS\s+Linux\s+release\s+\K(\d+\.\d+)' \
+        if ! os_version="$(grep -oP 'CentOS\s+(Linux|Stream)\s+release\s+\K(\d+(\.\d+)?)' \
                                     "${REDHAT_RELEASE_PATH}" 2>/dev/null)"; then
             report_step_error "Detect ${os_type} version"
         fi
