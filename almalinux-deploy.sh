@@ -14,11 +14,7 @@ OS_RELEASE_PATH='/etc/os-release'
 REDHAT_RELEASE_PATH='/etc/redhat-release'
 # AlmaLinux OS 8.3
 MINIMAL_SUPPORTED_VERSION='8'
-<<<<<<< HEAD
-VERSION='0.1.9'
-=======
 VERSION='0.1.10'
->>>>>>> parent of 76c96a1 (fix merge error)
 
 BRANDING_PKGS="centos-backgrounds centos-logos centos-indexhtml \
                 centos-logos-ipa centos-logos-httpd \
@@ -29,7 +25,7 @@ BRANDING_PKGS="centos-backgrounds centos-logos centos-indexhtml \
                 redhat-logos-ipa redhat-logos-httpd"
 
 REMOVE_PKGS="centos-linux-release centos-gpg-keys centos-linux-repos \
-                centos-stream-release centos-stream-repos kpatch kpatch-dnf\
+                centos-stream-release centos-stream-repos kpatch kpatch-dnf \
                 libreport-plugin-rhtsupport libreport-rhel insights-client \
                 libreport-rhel-anaconda-bugzilla libreport-rhel-bugzilla \
                 oraclelinux-release oraclelinux-release-el8 \
@@ -164,30 +160,8 @@ assert_supported_panel() {
     local -r panel_type="${1}"
     local -r panel_version="${2}"
     if [[ "${panel_type}" == 'plesk' ]]; then
-<<<<<<< HEAD
         report_step_error 'Plesk is not supported yet'
         exit 1
-=======
-IFS=. read -r major minor micro << EOF
-${panel_version}
-EOF
-        if [[ -z ${micro} ]]; then
-            micro=0
-        fi
-        if [[ -z ${minor} ]]; then
-            minor=0
-        fi
-        if [[ ${major} -lt ${plesk_min_major} ]]; then
-            report_step_error "${error_msg}"
-            exit 1
-        elif [[ ${major} -eq ${plesk_min_major} && ${minor} -lt ${plesk_min_minor} ]]; then
-            report_step_error "${error_msg}"
-            exit 1
-        elif [[ ${major} -eq ${plesk_min_major} && ${minor} -eq ${plesk_min_minor} && ${micro} -lt ${plesk_min_micro} ]]; then
-            report_step_error "${error_msg}"
-            exit 1
-        fi
->>>>>>> parent of f1a3ed5 (Merge pull request #2 from philrandal/issue_58)
     fi
 }
 
