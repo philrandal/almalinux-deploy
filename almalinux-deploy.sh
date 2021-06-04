@@ -14,7 +14,11 @@ OS_RELEASE_PATH='/etc/os-release'
 REDHAT_RELEASE_PATH='/etc/redhat-release'
 # AlmaLinux OS 8.3
 MINIMAL_SUPPORTED_VERSION='8'
+<<<<<<< HEAD
 VERSION='0.1.9'
+=======
+VERSION='0.1.10'
+>>>>>>> parent of 76c96a1 (fix merge error)
 
 BRANDING_PKGS="centos-backgrounds centos-logos centos-indexhtml \
                 centos-logos-ipa centos-logos-httpd \
