@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # Description: EL to AlmaLinux migration script.
 # License: GPLv3.
 # Environment variables:
@@ -12,6 +13,7 @@ exec > >(tee /var/log/almalinux-deploy.log)
 BASE_TMP_DIR='/root'
 OS_RELEASE_PATH='/etc/os-release'
 REDHAT_RELEASE_PATH='/etc/redhat-release'
+STAGE_STATUSES_DIR='/var/run/almalinux-deploy-statuses'
 # AlmaLinux OS 8.3
 MINIMAL_SUPPORTED_VERSION='8'
 VERSION='0.1.10'
@@ -30,6 +32,49 @@ REMOVE_PKGS="centos-linux-release centos-gpg-keys centos-linux-repos \
                 libreport-rhel-anaconda-bugzilla libreport-rhel-bugzilla \
                 oraclelinux-release oraclelinux-release-el8 \
                 redhat-release redhat-release-eula"
+
+
+# Save the successful status of a stage for future continue of it
+# $1 - name of a stage
+save_status_of_stage() {
+    if [[ 0 != "$(id -u)" ]]; then
+        # the function is called in tests and should be skipped
+        return 0
+    fi
+    local -r stage_name="${1}"
+    if [[ ! -d "${STAGE_STATUSES_DIR}" ]]; then
+        mkdir -p "${STAGE_STATUSES_DIR}"
+    fi
+    touch "${STAGE_STATUSES_DIR}/${stage_name}"
+}
+
+
+# Get a status of a stage for continue of it
+# $1 - name of a stage
+# The function returns 0 if stage isn't completed and 1 if it's completed
+get_status_of_stage() {
+    if [[ 0 != "$(id -u)" ]]; then
+        # the function is called in tests and should be skipped
+        return 1
+    fi
+    local -r stage_name="${1}"
+    if [[ ! -d "${STAGE_STATUSES_DIR}" ]]; then
+        return 0
+    fi
+    if [[ ! -f "${STAGE_STATUSES_DIR}/${stage_name}" ]]; then
+        return 0
+    fi
+    return 1
+}
+
+
+is_migration_completed() {
+    if get_status_of_stage "completed"; then
+        printf '\n\033[0;32mMigration to AlmaLinux was already completed\033[0m\n'
+        exit 0
+    fi
+}
+
 
 # Reports a completed step using a green color.
 #
@@ -133,6 +178,9 @@ get_panel_info() {
 # $2 - Operational system version (e.g. 8 or 8.3).
 # $3 - System architecture (e.g. x86_64).
 assert_supported_system() {
+    if get_status_of_stage "assert_supported_system"; then
+        return 0
+    fi
     local -r os_type="${1}"
     local -r os_version="${2:0:1}"
     local -r arch="${3}"
@@ -150,6 +198,8 @@ assert_supported_system() {
         exit 1
     fi
     report_step_done "Check ${os_type}-${os_version}.${arch} is supported"
+    save_status_of_stage "assert_supported_system"
+    return 0
 }
 
 # Terminates the program if a control panel is not supported by AlmaLinux.
@@ -157,6 +207,9 @@ assert_supported_system() {
 # $1 - Control panel type.
 # $2 - Control panel version.
 assert_supported_panel() {
+    if get_status_of_stage "assert_supported_panel"; then
+        return 0
+    fi
     local -r panel_type="${1}"
     local -r panel_version="${2}"
     local plesk_min_major=18
@@ -167,7 +220,8 @@ assert_supported_panel() {
     local micro
     local error_msg="${panel_type} version \"${panel_version}\" is not supported. Please update the control panel to version \"${plesk_min_major}.${plesk_min_minor}.${plesk_min_micro}\"."
     if [[ "${panel_type}" == 'plesk' ]]; then
-IFS=. read -r major minor micro << EOF
+    local IFS=.
+read -r major minor micro << EOF
 ${panel_version}
 EOF
         if [[ -z ${micro} ]]; then
@@ -187,6 +241,7 @@ EOF
             exit 1
         fi
     fi
+    save_status_of_stage "assert_supported_panel"
 }
 
 # Returns a latest almalinux-release RPM package download URL.
@@ -205,6 +260,9 @@ get_release_file_url() {
 #
 # $1 - Temporary directory path.
 install_rpm_pubkey() {
+    if get_status_of_stage "install_rpm_pubkey"; then
+        return 0
+    fi
     local -r tmp_dir="${1}"
     local -r pubkey_url="${ALMA_PUBKEY_URL:-https://repo.almalinux.org/almalinux/RPM-GPG-KEY-AlmaLinux}"
     local -r pubkey_path="${tmp_dir}/RPM-GPG-KEY-AlmaLinux"
@@ -219,6 +277,7 @@ install_rpm_pubkey() {
     rpm --import "${pubkey_path}"
     report_step_done 'Import RPM-GPG-KEY-AlmaLinux to RPM DB'
     rm -f "${pubkey_path}"
+    save_status_of_stage "install_rpm_pubkey"
 }
 
 # Downloads almalinux-release package.
@@ -257,6 +316,9 @@ assert_valid_package() {
 # $1 - OS version.
 # $2 - almalinux-release package file path.
 assert_compatible_os_version() {
+    if get_status_of_stage "assert_compatible_os_version"; then
+        return 0
+    fi
     local -r os_version="${1}"
     local -r release_path="${2}"
     local alma_version
@@ -271,22 +333,31 @@ assert_compatible_os_version() {
         report_step_error "Version of you OS ${os_version} is not supported yet"
         exit 1
     fi
+    save_status_of_stage "assert_compatible_os_version"
 }
 
 # Backup /etc/issue* files
 backup_issue() {
+    if get_status_of_stage "backup_issue"; then
+        return 0
+    fi
     for file in $(rpm -Vf /etc/issue | cut -d' ' -f4); do
         if [[ ${file} =~ "/etc/issue" ]]; then
             cp "${file}" "${file}.bak"
         fi
     done
+    save_status_of_stage "backup_issue"
 }
 
 # Restore /etc/issue* files
 restore_issue() {
+    if get_status_of_stage "restore_issue"; then
+        return 0
+    fi
     for file in /etc/issue /etc/issue.net; do
         [ ! -f "${file}.bak" ] || mv -f ${file}.bak ${file}
     done
+    save_status_of_stage "restore_issue"
 }
 
 # Recursively removes a given directory.
@@ -300,6 +371,9 @@ cleanup_tmp_dir() {
 #
 # $1 - almalinux-release RPM package path.
 migrate_from_centos() {
+    if get_status_of_stage "migrate_from_centos"; then
+        return 0
+    fi
     local -r release_path="${1}"
     local to_remove=''
     local alma_pkg=''
@@ -344,23 +418,30 @@ migrate_from_centos() {
             report_step_done "Install ${alma_pkg} package"
         fi
     done
+    save_status_of_stage "migrate_from_centos"
 }
 
 # Executes the 'dnf distro-sync -y' command.
 #
-# Returns the dnf command exit code.
 distro_sync() {
+    if get_status_of_stage "distro_sync"; then
+        return 0
+    fi
     local -r step='Run dnf distro-sync -y'
     local ret_code=0
     dnf distro-sync -y || {
         ret_code=${?}
         report_step_error "${step}. Exit code: ${ret_code}"
+        exit ${ret_code}
     }
     report_step_done "${step}"
-    return ${ret_code}
+    save_status_of_stage "distro_sync"
 }
 
 install_kernel() {
+    if get_status_of_stage "install_kernel"; then
+        return 0
+    fi
     if ! output=$(rpm -q kernel 2>&1); then
         if output=$(dnf -y install kernel 2>&1); then
             report_step_done "Install AlmaLinux kernel"
@@ -368,9 +449,13 @@ install_kernel() {
             report_step_error "Install AlmaLinux kernel"
         fi
     fi
+    save_status_of_stage "install_kernel"
 }
 
 grub_update() {
+    if get_status_of_stage "grub_update"; then
+        return 0
+    fi
     if [ -d /sys/firmware/efi ]; then
         if [ -d /boot/efi/EFI/almalinux ]; then
             grub2-mkconfig -o /boot/efi/EFI/almalinux/grub.cfg
@@ -382,10 +467,14 @@ grub_update() {
     else
         grub2-mkconfig -o /boot/grub2/grub.cfg
     fi
+    save_status_of_stage "grub_update"
 }
 
 # Check do we have custom kernel (e.g. kernel-uek) and print warning
 check_custom_kernel() {
+    if get_status_of_stage "check_custom_kernel"; then
+        return 0
+    fi
     local output
     output=$(rpm -qa | grep kernel-uek) || :
     if [ -n "${output}" ]; then
@@ -401,6 +490,7 @@ that won't boot in Secure Boot mode anymore[0m:\n"
         echo "If you don't need them, you can remove them by using the 'dnf remove" \
             "${output}' command"
     fi
+    save_status_of_stage "check_custom_kernel"
 }
 
 # Backup and restore symbol links from java-openjdk-headless package
@@ -408,14 +498,21 @@ that won't boot in Secure Boot mode anymore[0m:\n"
 javaBackup=$(mktemp /tmp/java_backup.XXXXXX)
 
 backup_java_links() {
+    if get_status_of_stage "backup_java_links"; then
+        return 0
+    fi
     local java_alternatives
     # do nothing if java alternatives don't exist
     if java_alternatives="$(update-alternatives --display java)"; then
         echo "${java_alternatives}" | grep -oP '(?<=slave ).*' | sed -e 's#\(\S*\): \(\S*\)#\2 \1#' > "${javaBackup}"
     fi
+    save_status_of_stage "backup_java_links"
 }
 
 restore_java_links() {
+    if get_status_of_stage "restore_java_links"; then
+        return 0
+    fi
     # do nothing if a backup of java alternatives symlinks doesn't exist
     [[ ! -s "${javaBackup}" ]] && return 0
     pushd /etc/alternatives
@@ -429,9 +526,39 @@ restore_java_links() {
         fi
     done < "${javaBackup}"
     popd
+    save_status_of_stage "restore_java_links"
 }
 
+
+add_efi_boot_record() {
+    if get_status_of_stage "add_efi_boot_record"; then
+        return 0
+    fi
+    if [[ ! -d /sys/firmware/efi ]]; then
+        return
+    fi
+    efibootmgr -c -L "AlmaLinux" -l "\EFI\almalinux\shimx64.efi"
+    report_step_done "The new EFI boot record for AlmaLinux is added"
+    save_status_of_stage "add_efi_boot_record"
+}
+
+
+reinstall_secure_boot_packages() {
+    if get_status_of_stage "reinstall_secure_boot_packages"; then
+        return 0
+    fi
+    for pkg in $(rpm -qa | grep -E 'shim|fwupd|grub2|kernel'); do
+        if [[ "AlmaLinux" != "$(rpm -q --queryformat '%{vendor}' "$pkg")" ]]; then
+            yum reinstall "${pkg}" -y
+        fi
+    done
+    report_step_done "All Secure Boot related packages which were released by not AlmaLinux are reinstalled"
+    save_status_of_stage "reinstall_secure_boot_packages"
+}
+
+
 main() {
+    is_migration_completed
     local arch
     local os_version
     local os_type
@@ -477,12 +604,15 @@ main() {
     esac
 
     backup_java_links
-    distro_sync || exit ${?}
+    distro_sync
     restore_java_links
     restore_issue
     install_kernel
     grub_update
+    reinstall_secure_boot_packages
+    add_efi_boot_record
     check_custom_kernel
+    save_status_of_stage "completed"
     printf '\n\033[0;32mMigration to AlmaLinux is completed\033[0m\n'
 }
 
