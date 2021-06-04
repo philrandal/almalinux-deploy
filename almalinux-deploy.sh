@@ -16,7 +16,7 @@ REDHAT_RELEASE_PATH='/etc/redhat-release'
 STAGE_STATUSES_DIR='/var/run/almalinux-deploy-statuses'
 # AlmaLinux OS 8.3
 MINIMAL_SUPPORTED_VERSION='8'
-VERSION='0.1.10'
+VERSION='0.1.11'
 
 BRANDING_PKGS="centos-backgrounds centos-logos centos-indexhtml \
                 centos-logos-ipa centos-logos-httpd \
