@@ -29,7 +29,7 @@ REMOVE_PKGS=("centos-linux-release" "centos-gpg-keys" "centos-linux-repos" \
                 "libreport-plugin-rhtsupport" "libreport-rhel" "insights-client" \
                 "libreport-rhel-anaconda-bugzilla" "libreport-rhel-bugzilla" \
                 "oraclelinux-release" "oraclelinux-release-el8" \
-                "redhat-release" "redhat-release-eula" "kpatch" "kpatch-dnf")
+                "redhat-release" "redhat-release-eula")
 
 setup_log_files() {
     exec > >(tee /var/log/almalinux-deploy.log)
