@@ -37,8 +37,8 @@ REMOVE_PKGS=("centos-linux-release" "centos-gpg-keys" "centos-linux-repos" \
                 "redhat-release" "redhat-release-eula" \
                 "rocky-release" "rocky-gpg-keys" "rocky-repos" \
                 "rocky-obsolete-packages" \
-				"centos-stream-release" "centos-stream-repos" \
-				"kpatch" "kpatch-dnf")
+                "centos-stream-release" "centos-stream-repos" \
+                "kpatch" "kpatch-dnf")
 
 setup_log_files() {
     exec > >(tee /var/log/almalinux-deploy.log)
@@ -169,8 +169,8 @@ get_os_version() {
     local -r os_type="${1}"
     local os_version
     if [[ "${os_type}" == 'centos' ]]; then
-		if ! os_version="$(grep -oP 'CentOS\s+(Linux|Stream)\s+release\s+\K(\d+(\.\d+)?)' \ 
-                                    "${REDHAT_RELEASE_PATH}" 2>/dev/null)"; then 
+        if ! os_version="$(grep -oP 'CentOS\s+(Linux|Stream)\s+release\s+\K(\d+(\.\d+)?)' \
+                                    "${REDHAT_RELEASE_PATH}" 2>/dev/null)"; then
             report_step_error "Detect ${os_type} version"
         fi
     else
