@@ -28,7 +28,9 @@ BRANDING_PKGS=("centos-backgrounds" "centos-logos" "centos-indexhtml" \
                 "redhat-backgrounds" "redhat-logos" "redhat-indexhtml" \
                 "redhat-logos-ipa" "redhat-logos-httpd" \
                 "rocky-backgrounds" "rocky-logos" "rocky-indexhtml" \
-                "rocky-logos-ipa" "rocky-logos-httpd")
+                "rocky-logos-ipa" "rocky-logos-httpd" \
+                "centos-stream-release" "centos-stream-repos" \
+                "kpatch" "kpatch-dnf")
 
 REMOVE_PKGS=("centos-linux-release" "centos-gpg-keys" "centos-linux-repos" \
                 "libreport-plugin-rhtsupport" "libreport-rhel" "insights-client" \
@@ -36,10 +38,10 @@ REMOVE_PKGS=("centos-linux-release" "centos-gpg-keys" "centos-linux-repos" \
                 "oraclelinux-release" "oraclelinux-release-el8" \
                 "redhat-release" "redhat-release-eula" \
                 "rocky-release" "rocky-gpg-keys" "rocky-repos" \
-                "rocky-obsolete-packages" \
-                "centos-stream-release" "centos-stream-repos" \
-                "kpatch" "kpatch-dnf")
+                "rocky-obsolete-packages")
 
+module_list_enabled=""
+module_list_installed=""
 is_container=0
 
 setup_log_files() {
@@ -499,6 +501,18 @@ migrate_from_centos() {
     save_status_of_stage "migrate_from_centos"
 }
 
+# Reset modules stream ol8 for OracleLinux
+reset_wrong_module_streams() {
+    module_list_enabled=$(dnf -e 1 module list --enabled | awk '$2 == "ol8" {printf $1" "}')
+    module_list_installed=$(dnf -e 1 module list --installed | awk '$2 == "ol8" {printf $1" "}')
+    if [ -n "${module_list_enabled}" ]; then
+        # shellcheck disable=SC2086
+        dnf module reset -y ${module_list_enabled}
+        echo "reset modules: ${module_list_enabled}"
+        report_step_done "Reset modules"
+    fi
+}
+
 # Executes the 'dnf distro-sync -y' command.
 #
 distro_sync() {
@@ -536,6 +550,26 @@ distro_sync() {
     fi
     report_step_done "${step}"
     save_status_of_stage "distro_sync"
+}
+
+# Enable reseted modules with new stream rhel8
+restore_module_streams() {
+    if [ -n "${module_list_enabled}" ]; then
+        # shellcheck disable=SC2001,2086
+        module_enabled_rhel=$(echo ${module_list_enabled} | sed -e 's# #:rhel8 #g')
+        # shellcheck disable=SC2086
+        dnf module enable -y ${module_enabled_rhel}
+        echo "re-enabled modules: ${module_enabled_rhel}"
+        report_step_done "Enable modules"
+    fi
+    if [ -n "${module_list_installed}" ]; then
+        # shellcheck disable=SC2001,2086
+        module_installed_rhel=$(echo ${module_list_installed} | sed -e 's# #:rhel8 #g')
+        # shellcheck disable=SC2086
+        dnf module install -y ${module_installed_rhel}
+        echo "installed modules: ${module_installed_rhel}"
+        report_step_done "Install modules"
+    fi
 }
 
 install_kernel() {
@@ -833,7 +867,9 @@ main() {
     esac
 
     backup_alternatives
+    reset_wrong_module_streams
     distro_sync
+    restore_module_streams
     restore_alternatives
     restore_issue
     # don't do this steps if we inside the lxc container
