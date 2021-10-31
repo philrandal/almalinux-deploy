@@ -28,9 +28,7 @@ BRANDING_PKGS=("centos-backgrounds" "centos-logos" "centos-indexhtml" \
                 "redhat-backgrounds" "redhat-logos" "redhat-indexhtml" \
                 "redhat-logos-ipa" "redhat-logos-httpd" \
                 "rocky-backgrounds" "rocky-logos" "rocky-indexhtml" \
-                "rocky-logos-ipa" "rocky-logos-httpd" \
-                "centos-stream-release" "centos-stream-repos" \
-                "kpatch" "kpatch-dnf")
+                "rocky-logos-ipa" "rocky-logos-httpd")
 
 REMOVE_PKGS=("centos-linux-release" "centos-gpg-keys" "centos-linux-repos" \
                 "libreport-plugin-rhtsupport" "libreport-rhel" "insights-client" \
@@ -38,7 +36,9 @@ REMOVE_PKGS=("centos-linux-release" "centos-gpg-keys" "centos-linux-repos" \
                 "oraclelinux-release" "oraclelinux-release-el8" \
                 "redhat-release" "redhat-release-eula" \
                 "rocky-release" "rocky-gpg-keys" "rocky-repos" \
-                "rocky-obsolete-packages")
+                "rocky-obsolete-packages" \
+                "centos-stream-release" "centos-stream-repos" \
+                "kpatch" "kpatch-dnf")
 
 module_list_enabled=""
 module_list_installed=""
