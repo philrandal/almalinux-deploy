@@ -38,7 +38,7 @@ REMOVE_PKGS=("centos-linux-release" "centos-gpg-keys" "centos-linux-repos" \
                 "rocky-release" "rocky-gpg-keys" "rocky-repos" \
                 "rocky-obsolete-packages" \
                 "centos-stream-release" "centos-stream-repos" \
-                "kpatch" "kpatch-dnf")
+                "kpatch" "kpatch-dnf" "glibc-gconv-extra")
 
 module_list_enabled=""
 module_list_installed=""
