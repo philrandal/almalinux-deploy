@@ -30,11 +30,11 @@ In order to convert your EL8 operating system to AlmaLinux do the following:
    ```shell
    # check release file
    $ cat /etc/redhat-release
-   AlmaLinux release 8.4 (Electric Cheetah)
+   AlmaLinux release 8.5 (Arctic Sphynx)
 
    # check that the system boots AlmaLinux kernel by default
    $ sudo grubby --info DEFAULT | grep AlmaLinux
-   title="AlmaLinux (4.18.0-305.el8.x86_64) 8"
+   title="AlmaLinux (4.18.0-348.el8.x86_64) 8.5 (Arctic Sphynx)"
    ```
 6. Thank you for choosing AlmaLinux!
 
