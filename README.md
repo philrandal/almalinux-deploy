@@ -7,26 +7,32 @@ An EL to AlmaLinux migration tool.
 
 In order to convert your EL8 operating system to AlmaLinux do the following:
 
-1. Make a backup of the system. We didn't test all possible scenarios so there
+ 1. As OS version 8.5 is required for migration, install the latest updates. It's also recommended to reboot after the update to boot with the latest kernel.
+
+    ```
+    sudo dnf update -y
+    sudo reboot
+    ```
+2. Back up the system. We didn't test all possible scenarios so there
    is a risk that something goes wrong. In such a situation you will have a
    restore point.
-2. Disable Secure Boot because AlmaLinux doesn't support it yet
+3. Disable Secure Boot because AlmaLinux doesn't support it yet
    ([almbz#3](https://bugs.almalinux.org/view.php?id=3)). Detailed instructions
    for bare metal hardware can be found
    [here](https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/disabling-secure-boot#disable-secure-boot).
    Instructions for VMWare are available
    [here](https://docs.vmware.com/en/VMware-vSphere/6.7/com.vmware.vsphere.security.doc/GUID-898217D4-689D-4EB5-866C-888353FE241C.html).
-3. Download the [almalinux-deploy.sh](almalinux-deploy.sh) script:
+4. Download the [almalinux-deploy.sh](almalinux-deploy.sh) script:
    ```shell
    $ curl -O https://raw.githubusercontent.com/philrandal/almalinux-deploy/master/almalinux-deploy.sh
    ```
-4. Run the script and check its output for errors:
+5. Run the script and check its output for errors:
    ```shell
    $ sudo bash almalinux-deploy.sh
      ...
      Migration to AlmaLinux is completed
    ```
-5. Ensure that your system was successfully converted:
+6. Ensure that your system was successfully converted:
    ```shell
    # check release file
    $ cat /etc/redhat-release
@@ -36,7 +42,7 @@ In order to convert your EL8 operating system to AlmaLinux do the following:
    $ sudo grubby --info DEFAULT | grep AlmaLinux
    title="AlmaLinux (4.18.0-348.el8.x86_64) 8.5 (Arctic Sphynx)"
    ```
-6. Thank you for choosing AlmaLinux!
+7. Thank you for choosing AlmaLinux!
 
 
 ## Roadmap
